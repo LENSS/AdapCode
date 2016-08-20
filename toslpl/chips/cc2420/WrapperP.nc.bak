@@ -1,0 +1,319 @@
+/*
+ * "Copyright (c) 2005 Stanford University. All rights reserved.
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose, without fee, and without written
+ * agreement is hereby granted, provided that the above copyright
+ * notice, the following two paragraphs and the author appear in all
+ * copies of this software.
+ * 
+ * IN NO EVENT SHALL STANFORD UNIVERSITY BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+ * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
+ * IF STANFORD UNIVERSITY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+ * DAMAGE.
+ * 
+ * STANFORD UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+ * PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND STANFORD UNIVERSITY
+ * HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ * ENHANCEMENTS, OR MODIFICATIONS."
+ */
+
+
+/**
+ * Active message implementation on top of the CC2420 radio. This
+ * implementation uses the 16-bit addressing mode of 802.15.4: the
+ * only additional byte it adds is the AM id byte, as the first byte
+ * of the data payload.
+ *
+ * @author Philip Levis
+ * @version $Revision: 1.1 $ $Date: 2010/06/01 01:07:33 $
+ */
+ 
+#include "CC2420.h"
+
+module WrapperP @safe() {
+  provides {
+    interface WAMSend[am_id_t id];
+    interface Receive[am_id_t id];
+    interface WAMPacket;
+    interface WPacket;
+    interface WLowPowerListening;
+  }
+  
+  uses {
+#if defined(RLPL_MODE)
+    interface AMSend as rlplSend;
+    interface Receive as rlplReceive;
+    interface Packet as rlplPacket;
+    interface LowPowerListening as rlplLPL;
+    interface SplitControl as rlplControl;
+#endif
+#if defined(LPL_MODE)
+    interface AMSend as lplSend;
+    interface Receive as lplReceive;
+    interface Packet as lplPacket;
+    interface LowPowerListening as lplLPL;
+    interface SplitControl as lplControl;
+#endif
+  }
+}
+implementation {
+
+  /***************** AMSend Commands ****************/
+  command error_t WAMSend.send[am_id_t id](am_addr_t addr,
+					  message_t* msg,
+					  uint8_t len,uint8_t mode) {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplSend.send[id](addr,msg,len);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplSend.send[id](addr,msg,len);
+#endif
+  }
+
+  command error_t WAMSend.cancel[am_id_t id](message_t* msg,uint8_t mode) {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplSend.cancel[id](msg);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplSend.cancel[id](msg);
+#endif
+  }
+
+  command uint8_t WAMSend.maxPayloadLength[am_id_t id](uint8_t mode) {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplSend.maxPayloadLength[id]();
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplSend.maxPayloadLength[id]();
+#endif
+  }
+
+  command void* WAMSend.getPayload[am_id_t id](message_t* m, uint8_t len,uint8_t mode) {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplSend.getPayload[id](m,len);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplSend.getPayload[id](m,len);
+#endif
+  }
+
+  /***************** Packet Commands ****************/
+  command void WPacket.clear(message_t* msg,uint8_t mode) {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplPacket.clear(msg);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplPacket.clear(msg);
+#endif
+  
+}
+  
+  command uint8_t WPacket.payloadLength(message_t* msg,uint8_t mode) {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplPacket.payloadLength(msg);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplPacket.payloadLength(msg);
+#endif
+    //return (call CC2420PacketBody.getHeader(msg))->length - CC2420_SIZE;
+  }
+  
+  command void WPacket.setPayloadLength(message_t* msg, uint8_t len,uint8_t mode) {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplPacket.setPayloadLength(msg,len);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplPacket.setPayloadLength(msg,len);
+#endif
+    //(call CC2420PacketBody.getHeader(msg))->length  = len + CC2420_SIZE;
+  }
+  
+  command uint8_t WPacket.maxPayloadLength(,uint8_t mode) {
+    return TOSH_DATA_LENGTH;
+  }
+  
+  command void* WPacket.getPayload(message_t* msg, uint8_t len,uint8_t mode) {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplPacket.getPayloadLength(msg,len);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplPacket.getPayloadLength(msg,len);
+#endif
+  }
+
+  
+  /***************** SubSend Events ****************/
+#if defined(LPL_MODE)
+  event void lplSend.sendDone(message_t* msg, error_t result) {
+    signal WAMSend.sendDone[call AMPacket.type(msg)](msg, result);
+  }
+#endif
+#if defined(RLPL_MODE)
+  event void rlplSend.sendDone(message_t* msg, error_t result) {
+    signal WAMSend.sendDone[call AMPacket.type(msg)](msg, result);
+  }
+#endif
+  
+  /***************** SubReceive Events ****************/
+#if defined(LPL_MODE)
+  event message_t* lplReceive.receive(message_t* msg, void* payload, uint8_t len) {
+      return signal Receive.receive[call AMPacket.type(msg)](msg, payload, len);
+  }
+#endif
+#if defined(RLPL_MODE)
+  event message_t* rlplReceive.receive(message_t* msg, void* payload, uint8_t len) {
+      return signal Receive.receive[call AMPacket.type(msg)](msg, payload, len);
+  }
+#endif
+  
+  /***************** Defaults ****************/
+  default event message_t* Receive.receive[am_id_t id](message_t* msg, void* payload, uint8_t len) {
+    return msg;
+  }
+  
+  default event void WAMSend.sendDone[uint8_t id](message_t* msg, error_t err) {
+  }
+
+ /***********************************************/
+ command void WLowPowerListening.setLocalSleepInterval(uint16_t sleepIntervalMs,uint8_t mode)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.setLocalSleepInterval(sleepIntervalMs);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.setLocalSleepInterval(sleepIntervalMs);
+#endif
+  }
+ command uint16_t WLowPowerListening.getLocalSleepInterval(uint8_t mode)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.getLocalSleepInterval();
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.getLocalSleepInterval();
+#endif
+ }
+  command void WLowPowerListening.setLocalDutyCycle(uint16_t dutyCycle,uint8_t mode)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.setLocalDutyCycle(dutyCycle);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.setLocalDutyCycle(dutyCycle);
+#endif
+ }
+  command uint16_t WLowPowerListening.getLocalDutyCycle(uint8_t mode)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.getLocalDutyCycle();
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.getLocalDutyCycle();
+#endif
+ }
+  command void WLowPowerListening.setRxSleepInterval(message_t *msg, uint16_t sleepIntervalMs)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.setRxSleepInterval(msg,sleepIntervalMs);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.setRxSleepInterval(msg,sleepIntervalMs);
+#endif
+ }
+  command uint16_t WLowPowerListening.getRxSleepInterval(message_t *msg,uint8_t mode)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.getRxSleepInterval(msg);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.getRxSleepInterval(msg);
+#endif
+ }
+  command void WLowPowerListening.setRxDutyCycle(message_t *msg, uint16_t dutyCycle,uint8_t mode)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.setRxDutyCycle(msg,dutyCycle);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.setRxDutyCycle(msg,dutyCycle);
+#endif
+ }
+  command uint16_t WLowPowerListening.getRxDutyCycle(message_t *msg)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.getRxDutyCycle(msg);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.getRxDutyCycle(msg);
+#endif
+ }
+  command uint16_t WLowPowerListening.dutyCycleToSleepInterval(uint16_t dutyCycle,uint8_t mode)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.dutyCycleToSleepInterval(dutyCycle);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.dutyCycleToSleepInterval(dutyCycle);
+#endif
+ }
+  command uint16_t WLowPowerListening.sleepIntervalToDutyCycle(uint16_t sleepInterval,uint8_t mode)
+ {
+#if defined(RLPL_MODE)
+  if(mode==RLPLM)
+     return call rlplLPL.sleepIntervalToDutyCycle(sleepInterval);
+#endif
+#if defined(LPL_MODE)
+  if(mode==LPLM)
+     return call lplLPL.sleepIntervalToDutyCycle(sleepInterval);
+#endif
+ }
+/*******************************************************************/
+command error_t SplitControl.start() {
+/* First call CC2420's and then RCC2420's */
+   return call lplControl.start();
+}
+
+command error_t SplitControl.stop()
+{
+}
+
+  
+}

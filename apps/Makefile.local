@@ -1,0 +1,3 @@
+
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/receive
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/transmit

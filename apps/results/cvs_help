@@ -1,0 +1,4 @@
+export CVSROOT=:ext:rojac@interactive.cs.tamu.edu:/pub/org_web/lenss/cvsroot_lenss
+
+cvs import tos2.1 rel1_0 rel1_0
+cvs commit

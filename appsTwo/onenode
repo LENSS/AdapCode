@@ -1,0 +1,3 @@
+#!/bin/bash
+
+make epic reinstall.$1 bsl,/dev/ttyUSB$1

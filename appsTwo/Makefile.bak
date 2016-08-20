@@ -1,0 +1,34 @@
+COMPONENT=RadioCountToLedsAppC
+
+#BUILD_EXTRA_DEPS = RadioCountMsg.py RadioCountMsg.class
+CFLAGS += -I/opt/tinyos-2.1.0/apps/AdapCode/tos/lib/printf
+CFLAGS += -DPRINTF_BUFFER_SIZE=250
+
+#CFLAGS+=-DLOW_POWER_LISTENING
+CFLAGS+= -DRANDOM_DUTY_CYCLING
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/system
+#PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/lib/printf
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/transmit
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/lpl
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/csma
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/receive
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/interfaces
+PFLAGS+= -I/opt/tinyos-2.1.0/apps/AdapCode/tos/interfaces
+PFLAGS+= -I/opt/tinyos-2.1.0/tos
+PFLAGS+= -I/opt/tinyos-2.1.0/tos/chips/msp430
+PFLAGS+= -I/opt/tinyos-2.1.0/tos/tos/lib/tosthreads/lib/printf/
+PFLAGS+= -I/opt/tinyos-2.1.0/tos/system
+PFLAGS+= -I/usr/msp430/include/
+PFLAGS+= -I/usr/bin/
+ 
+#RadioCountMsg.py: RadioCountToLeds.h
+#	mig python -target=$(PLATFORM) $(CFLAGS) -python-classname=RadioCountMsg RadioCountToLeds.h radio_count_msg -o $@
+
+#RadioCountMsg.class: RadioCountMsg.java
+#	javac RadioCountMsg.java
+
+#RadioCountMsg.java: RadioCountToLeds.h
+#	mig java -target=$(PLATFORM) $(CFLAGS) -java-classname=RadioCountMsg RadioCountToLeds.h radio_count_msg -o $@
+
+
+include $(MAKERULES)

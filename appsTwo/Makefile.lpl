@@ -1,0 +1,44 @@
+COMPONENT=RadioCountToLedsAppC
+
+#BUILD_EXTRA_DEPS = RadioCountMsg.py RadioCountMsg.class
+#CFLAGS += -I$(TOSDIR)/lib/printf
+#CFLAGS += -DPRINTF_BUFFER_SIZE=250
+#CFLAGS += -DCC2420_DEF_RFPOWER=31
+CFLAGS += -DCC2420_DEF_CHANNEL=11
+CFLAGS += -DTOSH_DATA_LENGTH=120
+
+#CFLAGS+=-DDEBUG
+#CFLAGS+=-DENHANCEMENT
+CFLAGS+=-DAPP1
+CFLAGS+=-DAPP2
+#CFLAGS+=-DPKT_SIZE
+CFLAGS+=-DLOW_POWER_LISTENING
+#CFLAGS+=-DRANDOM_DUTY_CYCLING
+PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/apps/TopoBuilder
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/tos/system
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/transmit
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/lpl
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/csma
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/receive
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/tos/chips/cc2420/interfaces
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/apps/AdapCode/tos/interfaces
+#PFLAGS+= -I/home/roja/tinyos-2.1.0/tos/interfaces
+#PFLAGS+= -I/opt/tinyos-2.1.0/tos/chips/msp430
+PFLAGS+= -Iprintf/
+PFLAGS+= -I/home/roja/tinyos-2.1.0/tos/system
+PFLAGS+= -I/usr/msp430/include/
+PFLAGS+= -I/usr/bin/
+PFLAGS+= -I/usr/sbin/
+ 
+#RadioCountMsg.py: RadioCountToLeds.h
+#	mig python -target=$(PLATFORM) $(CFLAGS) -python-classname=RadioCountMsg RadioCountToLeds.h radio_count_msg -o $@
+
+#RadioCountMsg.class: RadioCountMsg.java
+#	javac RadioCountMsg.java
+
+#RadioCountMsg.java: RadioCountToLeds.h
+#	mig java -target=$(PLATFORM) $(CFLAGS) -java-classname=RadioCountMsg RadioCountToLeds.h radio_count_msg -o $@
+
+
+include $(MAKERULES)
